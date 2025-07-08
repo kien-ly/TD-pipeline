@@ -1,0 +1,24 @@
+apiVersion: v2
+name: td-pipeline
+description: Data Engineering Pipeline with CDC, Redpanda, Flink and AWS S3
+type: application
+version: 1.0.0
+appVersion: "1.0"
+
+dependencies:
+  - name: redpanda
+    repository: "https://charts.redpanda.com/"
+    version: "5.8.14"
+    condition: redpanda.enabled
+  - name: kafka-connect
+    repository: "file://../kafka-connect"
+    version: "1.0.0"
+    condition: kafka-connect.enabled
+  - name: flink
+    repository: "file://../flink"
+    version: "1.0.0"
+    condition: flink.enabled
+  - name: postgres
+    repository: "file://../postgres"
+    version: "1.0.0"
+    condition: postgres.enabled

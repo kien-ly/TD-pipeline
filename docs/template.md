@@ -1,127 +1,50 @@
-streaming-platform/
-├── Chart.yaml                    # Main umbrella chart definition
-├── values.yaml                   # Global platform configuration
-├── requirements.yaml             # Platform-wide dependencies
-├── charts/                       # Core platform charts
-│   ├── redpanda/                 # Message streaming
+td-pipeline/
+├── charts/
+│   ├── umbrella/                 # Main umbrella chart
 │   │   ├── Chart.yaml
-│   │   ├── values.yaml
+│   │   ├── values.yaml          # Default values
 │   │   └── templates/
-│   │       ├── deployment.yaml
-│   │       ├── service.yaml
-│   │       └── configmap.yaml
-│   ├── flink/                    # Stream processing
+│   │       ├── _helpers.tpl
+│   │       └── sealed-secrets.yaml
+│   ├── redpanda/
 │   │   ├── Chart.yaml
-│   │   ├── values.yaml
+│   │   ├── values.yaml          # All templated values
 │   │   └── templates/
-│   │       ├── deployment.yaml
-│   │       ├── service.yaml
-│   │       └── configmap.yaml
-│   ├── debezium/                 # Change data capture
+│   ├── kafka-connect/
 │   │   ├── Chart.yaml
-│   │   ├── values.yaml
+│   │   ├── values.yaml          # AWS S3 sink ready
 │   │   └── templates/
-│   │       ├── deployment.yaml
-│   │       ├── service.yaml
-│   │       └── configmap.yaml
-│   └── s3-sink-connector/        # Data sink connector
+│   ├── flink/
+│   │   ├── Chart.yaml
+│   │   ├── values.yaml          # No hardcoded values
+│   │   └── templates/
+│   └── postgres/
 │       ├── Chart.yaml
-│       ├── values.yaml
+│       ├── values.yaml          # External DB config
 │       └── templates/
-│           ├── deployment.yaml
-│           ├── service.yaml
-│           └── configmap.yaml
-├── optional-services/            # Optional platform services
-│   ├── analytics-connector/
-│   │   ├── Chart.yaml
-│   │   ├── values.yaml
-│   │   └── templates/
-│   │       ├── deployment.yaml
-│   │       ├── service.yaml
-│   │       └── configmap.yaml
-│   ├── ml-pipeline/
-│   │   ├── Chart.yaml
-│   │   ├── values.yaml
-│   │   └── templates/
-│   │       ├── deployment.yaml
-│   │       ├── service.yaml
-│   │       └── configmap.yaml
-│   └── data-catalog/
-│       ├── Chart.yaml
-│       ├── values.yaml
-│       └── templates/
-│           ├── deployment.yaml
-│           ├── service.yaml
-│           └── configmap.yaml
-├── integrations/                 # External service integrations
-│   ├── apache-superset/
-│   │   ├── Chart.yaml
-│   │   ├── values.yaml
-│   │   ├── templates/
-│   │   │   ├── deployment.yaml
-│   │   │   ├── service.yaml
-│   │   │   ├── ingress.yaml
-│   │   │   ├── configmap.yaml
-│   │   │   └── secrets.yaml
-│   │   └── config/
-│   │       ├── superset_config.py
-│   │       └── dashboards/
-│   ├── external-apis/
-│   │   ├── Chart.yaml
-│   │   ├── values.yaml
-│   │   └── templates/
-│   │       ├── external-service.yaml
-│   │       └── endpoint-config.yaml
-│   └── cloud-services/
-│       ├── aws-integration/
-│       │   ├── Chart.yaml
-│       │   ├── values.yaml
-│       │   └── templates/
-│       │       ├── deployment.yaml
-│       │       └── configmap.yaml
-│       ├── gcp-integration/
-│       │   ├── Chart.yaml
-│       │   ├── values.yaml
-│       │   └── templates/
-│       │       ├── deployment.yaml
-│       │       └── configmap.yaml
-│       └── azure-integration/
-│           ├── Chart.yaml
-│           ├── values.yaml
-│           └── templates/
-│               ├── deployment.yaml
-│               └── configmap.yaml
-├── environments/                 # Environment-specific configurations
+├── environments/
+│   ├── values-dev.yaml
+│   ├── values-staging.yaml
+│   └── values-prod.yaml
+├── secrets/
 │   ├── dev/
-│   │   └── values.yaml           # Dev-specific feature flags
+│   │   ├── postgres-credentials.yaml
+│   │   └── aws-credentials.yaml
 │   ├── staging/
-│   │   └── values.yaml           # Staging-specific feature flags
-│   └── production/
-│       └── values.yaml           # Production-specific feature flags
-├── feature-configs/              # Feature toggle configurations
-│   ├── analytics.yaml
-│   ├── machine-learning.yaml
-│   └── governance.yaml
-├── config/                       # External configuration templates
-│   ├── superset/
-│   │   ├── superset_config.py
-│   │   └── dashboards/
-│   ├── api-gateways/
-│   │   ├── nginx.conf
-│   │   └── routes.yaml
-│   └── cloud-configs/
-│       ├── aws/
-│       ├── gcp/
-│       └── azure/
-├── secrets/                      # External service credentials
-│   ├── superset-secrets.yaml
-│   ├── external-api-keys.yaml
-│   └── cloud-credentials.yaml
-└── scripts/                      # Utility scripts
-    ├── enable-feature.sh
-    ├── disable-feature.sh
-    ├── setup-external-services.sh
-    ├── configure-integrations.sh
-    └── health-check.sh
-
-```
+│   │   ├── postgres-credentials.yaml
+│   │   └── aws-credentials.yaml
+│   └── prod/
+│       ├── postgres-credentials.yaml
+│       └── aws-credentials.yaml
+├── flink-jobs/
+│   ├── src/
+│   │   └── main/
+│   │       └── java/
+│   │           └── CDCProcessor.java
+│   ├── pom.xml
+│   └── Dockerfile
+├── scripts/
+│   ├── deploy.sh
+│   ├── setup-secrets.sh
+│   └── build-flink-job.sh
+└── README.md

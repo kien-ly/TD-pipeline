@@ -1,0 +1,4 @@
+apiVersion: v2
+name: postgres
+description: External PostgreSQL configuration
+version: 1.0.0

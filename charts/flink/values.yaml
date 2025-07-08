@@ -1,51 +1,60 @@
+# Flink configuration - no hardcoded values
 image:
-  repository: flink
-  tag: "1.18.0"
-  pullPolicy: IfNotPresent
+  repository: {{ .Values.global.flink.image.repository | default "flink" }}
+  tag: {{ .Values.global.flink.image.tag | default "1.18.0" }}
+  pullPolicy: {{ .Values.global.images.pullPolicy }}
 
 jobmanager:
-  replicaCount: 1
-  service:
-    type: NodePort
-    port: 8081
-    nodePort: 30081
+  replicaCount: {{ .Values.global.flink.jobmanager.replicas | default 1 }}
   
-  resources:
-    requests:
-      memory: 1Gi
-      cpu: 500m
-    limits:
-      memory: 2Gi
-      cpu: 1000m
+  service:
+    type: {{ .Values.global.flink.jobmanager.service.type | default "ClusterIP" }}
+    port: {{ .Values.global.flink.jobmanager.service.port | default 8081 }}
+    
+  resources: {{ .Values.global.flink.jobmanager.resources | default .Values.global.resources.medium | toYaml | nindent 4 }}
 
 taskmanager:
-  replicaCount: 2
+  replicaCount: {{ .Values.global.flink.taskmanager.replicas | default 2 }}
   
-  resources:
-    requests:
-      memory: 2Gi
-      cpu: 500m
-    limits:
-      memory: 4Gi
-      cpu: 1000m
+  resources: {{ .Values.global.flink.taskmanager.resources | default .Values.global.resources.large | toYaml | nindent 4 }}
 
+# Flink configuration
 config:
   flink:
-    jobmanager.rpc.address: flink-jobmanager
-    taskmanager.numberOfTaskSlots: 2
-    parallelism.default: 2
-    # S3 configuration for checkpointing
-    state.backend: filesystem
-    state.checkpoints.dir: s3://cdc-data/checkpoints
-    state.savepoints.dir: s3://cdc-data/savepoints
-    fs.s3a.endpoint: http://minio:9000
-    fs.s3a.access.key: minioadmin
-    fs.s3a.secret.key: minioadmin123
-    fs.s3a.path.style.access: true
+    jobmanager.rpc.address: {{ .Values.global.flink.config.jobmanagerRpcAddress | default "flink-jobmanager" | quote }}
+    taskmanager.numberOfTaskSlots: {{ .Values.global.flink.config.taskSlots | default 2 | quote }}
+    parallelism.default: {{ .Values.global.flink.config.parallelism | default 2 | quote }}
+    
+    # Checkpointing configuration
+    state.backend: {{ .Values.global.flink.config.stateBackend | default "filesystem" | quote }}
+    state.checkpoints.dir: {{ printf "s3://%s/checkpoints" .Values.global.s3.bucket | quote }}
+    state.savepoints.dir: {{ printf "s3://%s/savepoints" .Values.global.s3.bucket | quote }}
+    
+    # S3 filesystem configuration
+    s3.access-key: "{{ .Values.global.aws.accessKey }}"
+    s3.secret-key: "{{ .Values.global.aws.secretKey }}"
+    s3.endpoint: {{ .Values.global.s3.endpoint | default "https://s3.amazonaws.com" | quote }}
+    s3.endpoint.region: {{ .Values.global.aws.region | quote }}
+    s3.path.style.access: {{ .Values.global.s3.pathStyleAccess | default false | quote }}
+    
+    # Checkpointing intervals
+    execution.checkpointing.interval: {{ .Values.global.flink.config.checkpointInterval | default 30000 | quote }}
+    execution.checkpointing.min-pause: {{ .Values.global.flink.config.checkpointMinPause | default 500 | quote }}
+    
+    # Restart strategy
+    restart-strategy: {{ .Values.global.flink.config.restartStrategy | default "fixed-delay" | quote }}
+    restart-strategy.fixed-delay.attempts: {{ .Values.global.flink.config.restartAttempts | default 3 | quote }}
+    restart-strategy.fixed-delay.delay: {{ .Values.global.flink.config.restartDelay | default "10s" | quote }}
 
-# Job submission
+# Job configuration
 job:
-  enabled: true
-  jarPath: "/opt/flink/lib/cdc-job.jar"
-  className: "CDCProcessor"
-  args: []
+  enabled: {{ .Values.global.flink.job.enabled | default true }}
+  jarPath: {{ .Values.global.flink.job.jarPath | default "/opt/flink/lib/cdc-job.jar" | quote }}
+  className: {{ .Values.global.flink.job.className | default "CDCProcessor" | quote }}
+  args: {{ .Values.global.flink.job.args | default list | toYaml | nindent 4 }}
+  
+# Security context
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 9999
+  fsGroup: 9999

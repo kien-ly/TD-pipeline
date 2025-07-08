@@ -1,0 +1,100 @@
+# Staging environment overrides
+global:
+  environment: staging
+  namespace: td-pipeline-staging
+  
+  aws:
+    region: us-east-1
+    
+  s3:
+    bucket: td-pipeline-staging-bucket
+    
+  database:
+    host: rds-staging.cluster-xyz.us-east-1.rds.amazonaws.com
+    port: 5432
+    name: source_db_staging
+    
+  # Staging resource allocation
+  resources:
+    small:
+      requests:
+        memory: 256Mi
+        cpu: 250m
+      limits:
+        memory: 512Mi
+        cpu: 500m
+    medium:
+      requests:
+        memory: 512Mi
+        cpu: 500m
+      limits:
+        memory: 1Gi
+        cpu: 1000m
+    large:
+      requests:
+        memory: 1Gi
+        cpu: 1000m
+      limits:
+        memory: 2Gi
+        cpu: 2000m
+        
+  # Redpanda staging settings
+  redpanda:
+    replicas: 3
+    storage:
+      size: 50Gi
+      storageClass: gp3
+    external:
+      type: LoadBalancer
+    resources:
+      requests:
+        memory: 2Gi
+        cpu: 1000m
+      limits:
+        memory: 4Gi
+        cpu: 2000m
+        
+  # Kafka Connect staging settings
+  kafkaConnect:
+    replicas: 2
+    connectors:
+      s3Sink:
+        flushSize: 1000
+        rotateInterval: 30000
+        tasksMax: 2
+      debezium:
+        tasksMax: 2
+    resources:
+      requests:
+        memory: 1Gi
+        cpu: 500m
+      limits:
+        memory: 2Gi
+        cpu: 1000m
+        
+  # Flink staging settings
+  flink:
+    jobmanager:
+      replicas: 1
+      resources:
+        requests:
+          memory: 1Gi
+          cpu: 500m
+        limits:
+          memory: 2Gi
+          cpu: 1000m
+    taskmanager:
+      replicas: 3
+      resources:
+        requests:
+          memory: 2Gi
+          cpu: 1000m
+        limits:
+          memory: 4Gi
+          cpu: 2000m
+    config:
+      checkpointInterval: 30000
+      parallelism: 4
+      taskSlots: 4
+      restartAttempts: 5
+      restartDelay: "30s"

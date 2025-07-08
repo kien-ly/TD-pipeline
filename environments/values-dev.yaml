@@ -1,0 +1,81 @@
+# Development environment overrides
+global:
+  environment: dev
+  namespace: td-pipeline-dev
+  
+  aws:
+    region: us-east-1
+    
+  s3:
+    bucket: td-pipeline-dev-bucket
+    
+  database:
+    host: localhost
+    port: 5432
+    name: source_db_dev
+    
+  # Development resource constraints
+  resources:
+    small:
+      requests:
+        memory: 128Mi
+        cpu: 100m
+      limits:
+        memory: 256Mi
+        cpu: 200m
+    medium:
+      requests:
+        memory: 256Mi
+        cpu: 200m
+      limits:
+        memory: 512Mi
+        cpu: 500m
+    large:
+      requests:
+        memory: 512Mi
+        cpu: 500m
+      limits:
+        memory: 1Gi
+        cpu: 1000m
+        
+  # Redpanda dev settings
+  redpanda:
+    replicas: 1
+    storage:
+      size: 10Gi
+    resources:
+      requests:
+        memory: 512Mi
+        cpu: 250m
+      limits:
+        memory: 1Gi
+        cpu: 500m
+        
+  # Kafka Connect dev settings
+  kafkaConnect:
+    replicas: 1
+    connectors:
+      s3Sink:
+        flushSize: 100
+        rotateInterval: 10000
+        
+  # Flink dev settings
+  flink:
+    jobmanager:
+      replicas: 1
+      resources:
+        requests:
+          memory: 512Mi
+          cpu: 250m
+        limits:
+          memory: 1Gi
+          cpu: 500m
+    taskmanager:
+      replicas: 1
+      resources:
+        requests:
+          memory: 1Gi
+          cpu: 500m
+        limits:
+          memory: 2Gi
+          cpu: 1000m

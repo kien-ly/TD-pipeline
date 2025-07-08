@@ -1,4 +1,5 @@
 apiVersion: v2
 name: kafka-connect
-description: Kafka Connect with Debezium for PostgreSQL CDC
+description: Kafka Connect with Debezium and S3 sink
 version: 1.0.0
+appVersion: "7.5.0"

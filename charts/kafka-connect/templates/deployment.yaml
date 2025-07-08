@@ -14,30 +14,60 @@ spec:
       labels:
         {{- include "kafka-connect.selectorLabels" . | nindent 8 }}
     spec:
+      serviceAccountName: {{ include "kafka-connect.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.securityContext | nindent 8 }}
       initContainers:
-      {{- toYaml .Values.initContainers | nindent 6 }}
+      - name: download-connectors
+        image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+        command: ["sh", "-c"]
+        args:
+        - |
+          confluent-hub install --no-prompt debezium/debezium-connector-postgresql:2.7.0
+          confluent-hub install --no-prompt confluentinc/kafka-connect-s3:10.5.0
+        volumeMounts:
+        - name: plugins
+          mountPath: /usr/share/confluent-hub-components
+        securityContext:
+          runAsUser: 0
       containers:
       - name: kafka-connect
-        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         ports:
         - name: rest-api
-          containerPort: 8083
+          containerPort: {{ .Values.service.port }}
           protocol: TCP
         env:
         {{- range $key, $value := .Values.env }}
         - name: {{ $key }}
           value: {{ $value | quote }}
         {{- end }}
-        - name: CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR
-          value: "1"
-        - name: CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR  
-          value: "1"
-        - name: CONNECT_STATUS_STORAGE_REPLICATION_FACTOR
-          value: "1"
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: aws-credentials
+              key: access_key_id
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: aws-credentials
+              key: secret_access_key
         volumeMounts:
         - name: plugins
           mountPath: /usr/share/confluent-hub-components
+        livenessProbe:
+          httpGet:
+            path: /
+            port: rest-api
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /connectors
+            port: rest-api
+          initialDelaySeconds: 30
+          periodSeconds: 10
         resources:
           {{- toYaml .Values.resources | nindent 12 }}
       volumes:

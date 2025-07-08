@@ -1,0 +1,13 @@
+# PostgreSQL external configuration
+external:
+  enabled: {{ .Values.global.postgres.external.enabled | default true }}
+  host: {{ .Values.global.database.host | quote }}
+  port: {{ .Values.global.database.port | quote }}
+  database: {{ .Values.global.database.name | quote }}
+  
+# Service configuration for external access
+service:
+  enabled: {{ .Values.global.postgres.service.enabled | default true }}
+  type: {{ .Values.global.postgres.service.type | default "ExternalName" }}
+  externalName: {{ .Values.global.database.host | quote }}
+  port: {{ .Values.global.database.port | default 5432 }}

@@ -1,0 +1,100 @@
+# Production environment overrides
+global:
+  environment: prod
+  namespace: td-pipeline-prod
+  
+  aws:
+    region: us-east-1
+    
+  s3:
+    bucket: td-pipeline-prod-bucket
+    
+  database:
+    host: rds-prod.cluster-abc.us-east-1.rds.amazonaws.com
+    port: 5432
+    name: source_db_prod
+    
+  # Production resource allocation
+  resources:
+    small:
+      requests:
+        memory: 512Mi
+        cpu: 500m
+      limits:
+        memory: 1Gi
+        cpu: 1000m
+    medium:
+      requests:
+        memory: 1Gi
+        cpu: 1000m
+      limits:
+        memory: 2Gi
+        cpu: 2000m
+    large:
+      requests:
+        memory: 2Gi
+        cpu: 2000m
+      limits:
+        memory: 4Gi
+        cpu: 4000m
+        
+  # Redpanda production settings
+  redpanda:
+    replicas: 5
+    storage:
+      size: 100Gi
+      storageClass: gp3
+    external:
+      type: LoadBalancer
+    resources:
+      requests:
+        memory: 4Gi
+        cpu: 2000m
+      limits:
+        memory: 8Gi
+        cpu: 4000m
+        
+  # Kafka Connect production settings
+  kafkaConnect:
+    replicas: 3
+    connectors:
+      s3Sink:
+        flushSize: 5000
+        rotateInterval: 60000
+        tasksMax: 4
+      debezium:
+        tasksMax: 4
+    resources:
+      requests:
+        memory: 2Gi
+        cpu: 1000m
+      limits:
+        memory: 4Gi
+        cpu: 2000m
+        
+  # Flink production settings
+  flink:
+    jobmanager:
+      replicas: 2
+      resources:
+        requests:
+          memory: 2Gi
+          cpu: 1000m
+        limits:
+          memory: 4Gi
+          cpu: 2000m
+    taskmanager:
+      replicas: 6
+      resources:
+        requests:
+          memory: 4Gi
+          cpu: 2000m
+        limits:
+          memory: 8Gi
+          cpu: 4000m
+    config:
+      checkpointInterval: 60000
+      parallelism: 8
+      taskSlots: 8
+      restartAttempts: 10
+      restartDelay: "60s"

@@ -1,0 +1,51 @@
+apiVersion: flink.apache.org/v1beta1
+kind: FlinkDeployment
+metadata:
+  name: {{ include "flink.fullname" . }}
+  labels:
+    {{- include "flink.labels" . | nindent 4 }}
+spec:
+  image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+  flinkVersion: v1_18
+  flinkConfiguration:
+    {{- range $key, $value := .Values.config.flink }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  serviceAccount: {{ include "flink.serviceAccountName" . }}
+  jobManager:
+    resource:
+      memory: {{ .Values.jobmanager.resources.requests.memory | quote }}
+      cpu: {{ .Values.jobmanager.resources.requests.cpu | quote }}
+    replicas: {{ .Values.jobmanager.replicaCount }}
+  taskManager:
+    resource:
+      memory: {{ .Values.taskmanager.resources.requests.memory | quote }}
+      cpu: {{ .Values.taskmanager.resources.requests.cpu | quote }}
+    replicas: {{ .Values.taskmanager.replicaCount }}
+  podTemplate:
+    spec:
+      containers:
+      - name: flink-main-container
+        env:
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: aws-credentials
+              key: access_key_id
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: aws-credentials
+              key: secret_access_key
+        - name: AWS_DEFAULT_REGION
+          value: {{ .Values.global.aws.region | quote }}
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 10 }}
+  {{- if .Values.job.enabled }}
+  job:
+    jarURI: {{ .Values.job.jarPath }}
+    entryClass: {{ .Values.job.className }}
+    args: {{ .Values.job.args | toYaml | nindent 6 }}
+    parallelism: {{ .Values.config.flink.parallelism.default }}
+    upgradeMode: stateless
+  {{- end }}

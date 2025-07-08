@@ -1,57 +1,50 @@
-# Override Redpanda chart values for local development
-statefulset:
-  replicas: 3
-
-auth:
-  sasl:
-    enabled: false
+# Redpanda configuration - all values templated
+redpanda:
+  statefulset:
+    replicas: {{ .Values.global.redpanda.replicas | default 3 }}
+    
+  auth:
+    sasl:
+      enabled: {{ .Values.global.redpanda.auth.enabled | default false }}
+      
+  external:
+    enabled: {{ .Values.global.redpanda.external.enabled | default true }}
+    type: {{ .Values.global.redpanda.external.type | default "NodePort" }}
+    domain: {{ .Values.global.redpanda.external.domain | default "localhost" }}
+    
+  listeners:
+    kafka:
+      port: 9092
+      external:
+        default:
+          advertisedPorts: [{{ .Values.global.redpanda.ports.kafka | default 31092 }}]
+    admin:
+      port: 9644
+      external:
+        default:
+          advertisedPorts: [{{ .Values.global.redpanda.ports.admin | default 31644 }}]
+    http:
+      port: 8082
+      external:
+        default:
+          advertisedPorts: [{{ .Values.global.redpanda.ports.http | default 30082 }}]
+          
+  console:
+    enabled: {{ .Values.global.redpanda.console.enabled | default true }}
+    service:
+      type: {{ .Values.global.redpanda.console.serviceType | default "NodePort" }}
+      nodePort: {{ .Values.global.redpanda.console.nodePort | default 30082 }}
+      
+  storage:
+    persistentVolume:
+      enabled: {{ .Values.global.redpanda.storage.enabled | default true }}
+      size: {{ .Values.global.redpanda.storage.size | default "20Gi" }}
+      storageClass: {{ .Values.global.redpanda.storage.storageClass | default "standard" }}
+      
+  resources: {{ .Values.global.redpanda.resources | default .Values.global.resources.medium | toYaml | nindent 4 }}
   
-external:
-  enabled: true
-  type: NodePort
-  domain: "localhost"
-
-listeners:
-  kafka:
-    port: 9092
-    external:
-      default:
-        advertisedPorts: [31092]
-  admin:
-    port: 9644
-    external:
-      default:
-        advertisedPorts: [31644]
-  http:
-    port: 8082
-    external:
-      default:
-        advertisedPorts: [30082]
-
-console:
-  enabled: true
-  service:
-    type: NodePort
-    nodePort: 30082
-
-storage:
-  persistentVolume:
-    enabled: true
-    size: 20Gi
-    storageClass: "standard"
-
-resources:
-  cpu: 
-    cores: 1
-  memory:
-    container:
-      max: 2Gi
-
-config:
-  cluster:
-    auto_create_topics_enabled: true
-    default_topic_partitions: 3
-    default_topic_replications: 3
-  tunable:
-    log_segment_size: 536870912
-    compacted_log_segment_size: 268435456
+  config:
+    cluster:
+      auto_create_topics_enabled: {{ .Values.global.redpanda.config.autoCreateTopics | default true }}
+      default_topic_partitions: {{ .Values.global.redpanda.config.defaultPartitions | default 3 }}
+      default_topic_replications: {{ .Values.global.redpanda.config.defaultReplications | default 3 }}

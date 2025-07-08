@@ -1,35 +1,38 @@
 #!/bin/bash
+# scripts/deploy.sh
+
 set -e
 
-echo "🚀 Deploying TD-pipeline to Kind cluster..."
+ENVIRONMENT=${1:-staging}
+NAMESPACE="td-pipeline-${ENVIRONMENT}"
 
-# Create namespace
-kubectl create namespace td-pipeline --dry-run=client -o yaml | kubectl apply -f -
+echo "Deploying TD-Pipeline to ${ENVIRONMENT} environment..."
 
-# Apply secrets
-echo "Applying secrets..."
-kubectl apply -f secrets/ -n td-pipeline
+# Create namespace if it doesn't exist
+kubectl create namespace ${NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -
 
-# Install Helm dependencies
-echo "Installing Helm dependencies..."
-helm dependency update
+# Install Sealed Secrets Controller (if not already installed)
+if ! kubectl get crd sealedsecrets.bitnami.com &> /dev/null; then
+    echo "Installing Sealed Secrets Controller..."
+    helm repo add sealed-secrets https://bitnami-labs.github.io/sealed-secrets
+    helm repo update
+    helm install sealed-secrets-controller sealed-secrets/sealed-secrets \
+        --namespace kube-system \
+        --create-namespace
+fi
 
-# Deploy the pipeline
-echo "Deploying pipeline..."
-helm upgrade --install td-pipeline . \
-  -f values-local.yaml \
-  -n td-pipeline \
-  --timeout 10m \
-  --wait
+# Deploy secrets
+echo "Deploying secrets..."
+kubectl apply -f secrets/${ENVIRONMENT}/ -n ${NAMESPACE}
 
-echo "✅ Deployment complete!"
+# Deploy the main application
+echo "Deploying TD-Pipeline..."
+helm upgrade --install td-pipeline-${ENVIRONMENT} charts/td-pipeline \
+    --namespace ${NAMESPACE} \
+    --values environments/values-${ENVIRONMENT}.yaml \
+    --wait \
+    --timeout 300s
 
-# Show deployed resources
-echo "📊 Deployed resources:"
-kubectl get all -n td-pipeline
-
-echo "🌐 Access URLs:"
-echo "- Flink UI: http://localhost:8081"
-echo "- Redpanda Console: http://localhost:8082"
-echo "- MinIO Console: http://localhost:9001"
-echo "- Kafka Connect: http://localhost:8083"
+echo "Deployment completed successfully!"
+echo "Checking deployment status..."
+kubectl get pods -n ${NAMESPACE}

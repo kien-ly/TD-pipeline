@@ -1,0 +1,16 @@
+# charts/td-pipeline/Chart.yaml
+apiVersion: v2
+name: td-pipeline
+description: Multi-Environment Data Engineering Pipeline
+version: 0.1.0
+appVersion: "1.0"
+dependencies:
+  - name: redpanda
+    version: "5.0.0"
+    repository: "https://charts.redpanda.com"
+  - name: kafka-connect
+    version: "1.0.0"
+    repository: "file://../kafka-connect"
+  - name: flink
+    version: "1.0.0" 
+    repository: "file://../flink"

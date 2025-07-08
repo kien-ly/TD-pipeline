@@ -1,0 +1,65 @@
+redpanda:
+  service:
+    type: LoadBalancer
+  console:
+    enabled: false              # Disable UI in production
+  config:
+    tls:
+      enabled: true             # Enable TLS
+    auth:
+      sasl:
+        enabled: true           # Enable SASL authentication
+  schemaRegistry:
+    enabled: true
+  external:
+    enabled: true
+    type: LoadBalancer
+    addresses:
+      - redpanda.yourdomain.com
+
+kafka-connect:
+  image:
+    tag: 7.6.0
+  service:
+    type: ClusterIP
+    port: 8083
+  env:
+    - name: CONNECT_REST_ADVERTISED_HOST_NAME
+      value: "kafka-connect.production.svc.cluster.local"
+    - name: CONNECT_BOOTSTRAP_SERVERS
+      value: "redpanda.production.svc.cluster.local:9092"
+    - name: AWS_ACCESS_KEY_ID
+      valueFrom:
+        secretKeyRef:
+          name: aws-creds
+          key: accessKey
+    - name: AWS_SECRET_ACCESS_KEY
+      valueFrom:
+        secretKeyRef:
+          name: aws-creds
+          key: secretKey
+
+debezium:
+  service:
+    type: ClusterIP
+  env:
+    - name: POSTGRES_USER
+      valueFrom:
+        secretKeyRef:
+          name: pg-creds
+          key: username
+    - name: POSTGRES_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: pg-creds
+          key: password
+    - name: POSTGRES_DB
+      value: demo
+
+flink:
+  jobManager:
+    replicas: 2
+  taskManager:
+    replicas: 4
+  service:
+    type: ClusterIP

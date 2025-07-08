@@ -1,0 +1,7 @@
+  namespace: default
+  postgresSchemaToTrack: my_schema
+  postgresTableToTrack: my_table
+  replicationSlotName: my_slot
+  debeziumConnectorVersion: 2.4.0.Final
+  s3SinkConnectorVersion: 10.5.1
+  # ... other values

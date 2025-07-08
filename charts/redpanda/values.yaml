@@ -1,0 +1,15 @@
+replicaCount: 1
+
+service:
+  type: NodePort
+  port: 9092
+
+console:
+  enabled: true
+
+config:
+  tls:
+    enabled: false
+  auth:
+    sasl:
+      enabled: false

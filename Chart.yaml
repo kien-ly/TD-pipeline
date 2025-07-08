@@ -1,0 +1,18 @@
+apiVersion: v2
+name: redpanda-stack
+version: 0.1.0
+description: Umbrella chart for Redpanda + Kafka Connect + Debezium + Flink
+
+dependencies:
+  - name: redpanda
+    version: "0.1.0"
+    repository: "file://charts/redpanda"
+  - name: kafka-connect
+    version: "0.1.0"
+    repository: "file://charts/kafka-connect"
+  - name: debezium
+    version: "0.1.0"
+    repository: "file://charts/debezium"
+  - name: flink
+    version: "0.1.0"
+    repository: "file://charts/flink"

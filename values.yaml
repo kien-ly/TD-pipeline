@@ -1,0 +1,35 @@
+redpanda:
+  external:
+    enabled: true
+    type: NodePort
+  console:
+    enabled: true
+  config:
+    tls:
+      enabled: false
+    auth:
+      sasl:
+        enabled: false
+  schemaRegistry:
+    enabled: false
+
+kafka-connect:
+  kafka:
+    bootstrapServers: redpanda.redpanda.svc.cluster.local:9092
+  plugins:
+    custom: true
+  service:
+    type: NodePort
+    port: 8083
+
+debezium:
+  database:
+    user: postgres
+    password: example
+    name: demo
+
+flink:
+  jobManager:
+    replicas: 1
+  taskManager:
+    replicas: 1

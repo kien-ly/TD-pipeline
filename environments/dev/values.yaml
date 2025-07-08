@@ -1,0 +1,25 @@
+kafka-connect:
+  env:
+    - name: AWS_ACCESS_KEY_ID
+      valueFrom:
+        secretKeyRef:
+          name: redpanda-secrets
+          key: AWS_ACCESS_KEY_ID
+    - name: AWS_SECRET_ACCESS_KEY
+      valueFrom:
+        secretKeyRef:
+          name: redpanda-secrets
+          key: AWS_SECRET_ACCESS_KEY
+
+debezium:
+  env:
+    - name: POSTGRES_USER
+      valueFrom:
+        secretKeyRef:
+          name: redpanda-secrets
+          key: POSTGRES_USER
+    - name: POSTGRES_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: redpanda-secrets
+          key: POSTGRES_PASSWORD

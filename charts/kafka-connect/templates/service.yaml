@@ -1,0 +1,10 @@
+namespace: {{ .Release.Namespace }}
+type: {{ .Values.service.type }}
+ports:
+- name: rest-api
+  port: {{ .Values.service.port }}
+  targetPort: {{ .Values.service.targetPort }}
+  nodePort: {{ .Values.service.nodePort }}
+  protocol: TCP
+selector:
+  app: kafka-connect 

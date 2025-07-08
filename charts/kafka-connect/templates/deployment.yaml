@@ -1,0 +1,219 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-connect
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: kafka-connect
+    component: cdc-pipeline
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka-connect
+  template:
+    metadata:
+      labels:
+        app: kafka-connect
+        component: cdc-pipeline
+    spec:
+      containers:
+      - name: kafka-connect
+        image: confluentinc/cp-kafka-connect:7.4.0
+        ports:
+        - containerPort: 8083
+          name: rest-api
+        env:
+        # Kafka Connect configuration
+        - name: CONNECT_BOOTSTRAP_SERVERS
+          value: "{{ .Values.connectBootstrapServers }}"
+        - name: CONNECT_REST_PORT
+          value: "{{ .Values.connectRestPort }}"
+        - name: CONNECT_GROUP_ID
+          value: "{{ .Values.connectGroupId }}"
+        - name: CONNECT_CONFIG_STORAGE_TOPIC
+          value: "{{ .Values.connectConfigStorageTopic }}"
+        - name: CONNECT_OFFSET_STORAGE_TOPIC
+          value: "{{ .Values.connectOffsetStorageTopic }}"
+        - name: CONNECT_STATUS_STORAGE_TOPIC
+          value: "{{ .Values.connectStatusStorageTopic }}"
+        - name: CONNECT_KEY_CONVERTER
+          value: "{{ .Values.connectKeyConverter }}"
+        - name: CONNECT_VALUE_CONVERTER
+          value: "{{ .Values.connectValueConverter }}"
+        - name: CONNECT_KEY_CONVERTER_SCHEMAS_ENABLE
+          value: "{{ .Values.connectKeyConverterSchemasEnable }}"
+        - name: CONNECT_VALUE_CONVERTER_SCHEMAS_ENABLE
+          value: "{{ .Values.connectValueConverterSchemasEnable }}"
+        - name: CONNECT_INTERNAL_KEY_CONVERTER
+          value: "{{ .Values.connectInternalKeyConverter }}"
+        - name: CONNECT_INTERNAL_VALUE_CONVERTER
+          value: "{{ .Values.connectInternalValueConverter }}"
+        - name: CONNECT_INTERNAL_KEY_CONVERTER_SCHEMAS_ENABLE
+          value: "{{ .Values.connectInternalKeyConverterSchemasEnable }}"
+        - name: CONNECT_INTERNAL_VALUE_CONVERTER_SCHEMAS_ENABLE
+          value: "{{ .Values.connectInternalValueConverterSchemasEnable }}"
+        - name: CONNECT_REST_ADVERTISED_HOST_NAME
+          value: "{{ .Values.connectRestAdvertisedHostName }}"
+        - name: CONNECT_LOG4J_ROOT_LOGLEVEL
+          value: "{{ .Values.connectLog4jRootLoglevel }}"
+        - name: CONNECT_LOG4J_LOGGERS
+          value: "{{ .Values.connectLog4jLoggers }}"
+        - name: CONNECT_PLUGIN_PATH
+          value: "{{ .Values.connectPluginPath }}"
+        
+        # AWS Configuration (from secrets)
+        - name: AWS_REGION
+          valueFrom:
+            secretKeyRef:
+              name: aws-credentials
+              key: aws-region
+        - name: AWS_ACCESS_KEY_ID
+          valueFrom:
+            secretKeyRef:
+              name: aws-credentials
+              key: aws-access-key-id
+        - name: AWS_SECRET_ACCESS_KEY
+          valueFrom:
+            secretKeyRef:
+              name: aws-credentials
+              key: aws-secret-access-key
+        
+        # RDS Configuration (from secrets)
+        - name: AWS_RDS_ENDPOINT
+          valueFrom:
+            secretKeyRef:
+              name: rds-credentials
+              key: aws-rds-endpoint
+        - name: AWS_RDS_DBNAME
+          valueFrom:
+            secretKeyRef:
+              name: rds-credentials
+              key: aws-rds-dbname
+        - name: AWS_RDS_USER
+          valueFrom:
+            secretKeyRef:
+              name: rds-credentials
+              key: aws-rds-user
+        - name: AWS_RDS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: rds-credentials
+              key: aws-rds-password
+        - name: AWS_RDS_PORT
+          valueFrom:
+            secretKeyRef:
+              name: rds-credentials
+              key: aws-rds-port
+        
+        # S3 Configuration (from secrets)
+        - name: S3_BUCKET_NAME
+          valueFrom:
+            secretKeyRef:
+              name: s3-config
+              key: s3-bucket-name
+        
+        # CDC Configuration (from configmap)
+        - name: POSTGRES_SCHEMA_TO_TRACK
+          valueFrom:
+            configMapKeyRef:
+              name: cdc-config
+              key: postgres-schema-to-track
+        - name: POSTGRES_TABLE_TO_TRACK
+          valueFrom:
+            configMapKeyRef:
+              name: cdc-config
+              key: postgres-table-to-track
+        - name: REPLICATION_SLOT_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: cdc-config
+              key: replication-slot-name
+        
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8083
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8083
+          initialDelaySeconds: 60
+          periodSeconds: 15
+          timeoutSeconds: 10
+          failureThreshold: 5
+        
+        volumeMounts:
+        - name: connector-plugins
+          mountPath: /usr/share/confluent-hub-components
+          readOnly: true
+      
+      volumes:
+      - name: connector-plugins
+        emptyDir: {}
+      
+      initContainers:
+      - name: download-connectors
+        image: alpine:latest
+        command:
+        - /bin/sh
+        - -c
+        - |
+          set -ex
+
+          echo "Installing required tools..."
+          apk add --no-cache curl tar unzip
+
+          # Debezium PostgreSQL Connector
+          if [ ! -f /shared-plugins/debezium-connector-postgres/debezium-connector-postgres.jar ]; then
+            echo "Downloading and extracting Debezium PostgreSQL Connector..."
+            curl -fL -o /tmp/debezium-connector-postgres.tar.gz "https://repo1.maven.org/maven2/io/debezium/debezium-connector-postgres/{{ .Values.debeziumConnectorVersion }}/debezium-connector-postgres-{{ .Values.debeziumConnectorVersion }}-plugin.tar.gz"
+            mkdir -p /shared-plugins/debezium-connector-postgres
+            tar -xzf /tmp/debezium-connector-postgres.tar.gz -C /shared-plugins/debezium-connector-postgres
+          else
+            echo "Debezium PostgreSQL Connector already exists, skipping download."
+          fi
+
+          # S3 Sink Connector
+          if [ ! -d /shared-plugins/kafka-connect-s3 ]; then
+            echo "Downloading and extracting S3 Sink Connector..."
+            curl -fL -o /tmp/kafka-connect-s3.zip "https://api.hub.confluent.io/api/plugins/confluentinc/kafka-connect-s3/versions/{{ .Values.s3SinkConnectorVersion }}/confluentinc-kafka-connect-s3-{{ .Values.s3SinkConnectorVersion }}.zip"
+            unzip /tmp/kafka-connect-s3.zip -d /shared-plugins/
+          else
+            echo "S3 Sink Connector already exists, skipping download."
+          fi
+
+          echo "Connector download and extraction completed"
+
+          # Clean up temporary files
+          echo "Cleaning up temporary files..."
+          rm -f /tmp/debezium-connector-postgres.tar.gz
+          rm -f /tmp/kafka-connect-s3.zip
+
+        env:
+        - name: DEBEZIUM_CONNECTOR_VERSION
+          valueFrom:
+            configMapKeyRef:
+              name: cdc-config
+              key: debezium-connector-version
+        - name: S3_SINK_CONNECTOR_VERSION
+          valueFrom:
+            configMapKeyRef:
+              name: cdc-config
+              key: s3-sink-connector-version
+        volumeMounts:
+        - name: connector-plugins
+          mountPath: /shared-plugins 

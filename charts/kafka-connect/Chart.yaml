@@ -1,5 +1,4 @@
-  apiVersion: v2
-  name: kafka-connect
-  description: Kafka Connect for CDC pipeline
-  version: 0.1.0
-  appVersion: "7.4.0"
+apiVersion: v2
+name: kafka-connect
+description: Kafka Connect with Debezium for PostgreSQL CDC
+version: 1.0.0

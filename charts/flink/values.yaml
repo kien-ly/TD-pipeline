@@ -1,0 +1,51 @@
+image:
+  repository: flink
+  tag: "1.18.0"
+  pullPolicy: IfNotPresent
+
+jobmanager:
+  replicaCount: 1
+  service:
+    type: NodePort
+    port: 8081
+    nodePort: 30081
+  
+  resources:
+    requests:
+      memory: 1Gi
+      cpu: 500m
+    limits:
+      memory: 2Gi
+      cpu: 1000m
+
+taskmanager:
+  replicaCount: 2
+  
+  resources:
+    requests:
+      memory: 2Gi
+      cpu: 500m
+    limits:
+      memory: 4Gi
+      cpu: 1000m
+
+config:
+  flink:
+    jobmanager.rpc.address: flink-jobmanager
+    taskmanager.numberOfTaskSlots: 2
+    parallelism.default: 2
+    # S3 configuration for checkpointing
+    state.backend: filesystem
+    state.checkpoints.dir: s3://cdc-data/checkpoints
+    state.savepoints.dir: s3://cdc-data/savepoints
+    fs.s3a.endpoint: http://minio:9000
+    fs.s3a.access.key: minioadmin
+    fs.s3a.secret.key: minioadmin123
+    fs.s3a.path.style.access: true
+
+# Job submission
+job:
+  enabled: true
+  jarPath: "/opt/flink/lib/cdc-job.jar"
+  className: "CDCProcessor"
+  args: []

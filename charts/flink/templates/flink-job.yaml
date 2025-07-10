@@ -1,0 +1,17 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: flink-job
+  namespace: {{ .Values.global.namespace | default "data-platform-dev" }}
+spec:
+  parallelism: {{ .Values.jobParallelism }}
+  template:
+    metadata:
+      labels:
+        app: flink-job
+    spec:
+      containers:
+        - name: flink-job
+          image: flink:1.16.0
+          args: ["run", "/opt/flink/examples/streaming/TopSpeedWindowing.jar"]
+      restartPolicy: Never 

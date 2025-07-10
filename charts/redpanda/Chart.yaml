@@ -1,10 +1,6 @@
 apiVersion: v2
 name: redpanda
-description: Redpanda streaming platform
-version: 1.0.0
-appVersion: "23.2.11"
-
-dependencies:
-  - name: redpanda
-    repository: "https://charts.redpanda.com/"
-    version: "5.8.14"
+description: Redpanda streaming data broker
+version: 0.1.0
+appVersion: "22.2.1"
+type: application 

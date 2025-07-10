@@ -1,18 +1,22 @@
 apiVersion: v2
-name: redpanda-stack
+name: data-platform
+description: A data platform for CDC, streaming, and analytics with environment-specific namespaces and external secrets.
+type: application
 version: 0.1.0
-description: Umbrella chart for Redpanda + Kafka Connect + Debezium + Flink
-
+appVersion: "1.0"
 dependencies:
   - name: redpanda
-    version: "0.1.0"
+    version: ">=0.1.0"
     repository: "file://charts/redpanda"
-  - name: kafka-connect
-    version: "0.1.0"
-    repository: "file://charts/kafka-connect"
   - name: debezium
-    version: "0.1.0"
+    version: ">=0.1.0"
     repository: "file://charts/debezium"
+  - name: kafka-connect
+    version: ">=0.1.0"
+    repository: "file://charts/kafka-connect"
   - name: flink
-    version: "0.1.0"
+    version: ">=0.1.0"
     repository: "file://charts/flink"
+  - name: monitoring
+    version: ">=0.1.0"
+    repository: "file://charts/monitoring" 

@@ -1,75 +1,31 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "kafka-connect.fullname" . }}
-  labels:
-    {{- include "kafka-connect.labels" . | nindent 4 }}
+  name: kafka-connect
+  namespace: {{ .Values.global.namespace | default "data-platform-dev" }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      {{- include "kafka-connect.selectorLabels" . | nindent 6 }}
+      app: kafka-connect
   template:
     metadata:
       labels:
-        {{- include "kafka-connect.selectorLabels" . | nindent 8 }}
+        app: kafka-connect
     spec:
-      serviceAccountName: {{ include "kafka-connect.serviceAccountName" . }}
-      securityContext:
-        {{- toYaml .Values.securityContext | nindent 8 }}
-      initContainers:
-      - name: download-connectors
-        image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
-        command: ["sh", "-c"]
-        args:
-        - |
-          confluent-hub install --no-prompt debezium/debezium-connector-postgresql:2.7.0
-          confluent-hub install --no-prompt confluentinc/kafka-connect-s3:10.5.0
-        volumeMounts:
-        - name: plugins
-          mountPath: /usr/share/confluent-hub-components
-        securityContext:
-          runAsUser: 0
       containers:
-      - name: kafka-connect
-        image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
-        imagePullPolicy: {{ .Values.image.pullPolicy }}
-        ports:
-        - name: rest-api
-          containerPort: {{ .Values.service.port }}
-          protocol: TCP
-        env:
-        {{- range $key, $value := .Values.env }}
-        - name: {{ $key }}
-          value: {{ $value | quote }}
-        {{- end }}
-        - name: AWS_ACCESS_KEY_ID
-          valueFrom:
-            secretKeyRef:
-              name: aws-credentials
-              key: access_key_id
-        - name: AWS_SECRET_ACCESS_KEY
-          valueFrom:
-            secretKeyRef:
-              name: aws-credentials
-              key: secret_access_key
-        volumeMounts:
-        - name: plugins
-          mountPath: /usr/share/confluent-hub-components
-        livenessProbe:
-          httpGet:
-            path: /
-            port: rest-api
-          initialDelaySeconds: 60
-          periodSeconds: 30
-        readinessProbe:
-          httpGet:
-            path: /connectors
-            port: rest-api
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        resources:
-          {{- toYaml .Values.resources | nindent 12 }}
-      volumes:
-      - name: plugins
-        emptyDir: {}
+        - name: kafka-connect
+          image: confluentinc/cp-kafka-connect:7.4.0
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.s3.secretName }}
+                  key: {{ .Values.global.s3.accessKeyKey }}
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.s3.secretName }}
+                  key: {{ .Values.global.s3.secretKeyKey }}
+          ports:
+            - containerPort: 8083 

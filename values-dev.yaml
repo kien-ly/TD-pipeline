@@ -1,0 +1,19 @@
+global:
+  namespace: data-platform-dev
+  s3:
+    bucket: dev-bucket # Placeholder for production S3 bucket
+  postgres:
+    dbName: devdb # Placeholder for production database name
+    # hostOverride: dev-postgres.example.com
+
+redpanda:
+  replicaCount: 1
+
+debezium:
+  replicaCount: 1
+
+kafka-connect:
+  replicaCount: 1
+
+flink:
+  jobParallelism: 1 

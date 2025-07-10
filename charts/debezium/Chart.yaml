@@ -1,0 +1,6 @@
+apiVersion: v2
+name: debezium
+description: Debezium CDC source connector
+version: 0.1.0
+appVersion: "2.2.0"
+type: application 

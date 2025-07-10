@@ -1,0 +1,55 @@
+# Helm chart build output
+charts/*/charts/
+charts/*/tmpcharts/
+charts/*/Chart.lock
+charts/*/requirements.lock
+*.tgz
+
+# Kubernetes secrets and sensitive files
+scripts/create-secrets.sh.env
+scripts/create-secrets.sh
+secrets/
+*.secret.yaml
+*.secrets.yaml
+*.enc.yaml
+*.enc
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Editor directories and files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Python cache (if any scripts)
+__pycache__/
+*.pyc
+
+# Logs
+*.log
+
+# Do not commit values with real secrets
+values-*.local.yaml
+
+# Ignore backup files
+*.bak
+*.tmp
+
+# Node modules (if any UI or scripts)
+node_modules/
+
+# Helm test output
+output/
+
+# Explicitly allow example values
+!values.yaml
+!values-dev.yaml
+!values-prod.yaml
+
+# README and documentation are always included
+!README.md
+!docs/ 

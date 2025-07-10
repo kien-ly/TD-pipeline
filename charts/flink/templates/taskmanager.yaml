@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flink-taskmanager
+  namespace: {{ .Values.global.namespace | default "data-platform-dev" }}
+spec:
+  replicas: {{ .Values.jobParallelism }}
+  selector:
+    matchLabels:
+      app: flink-taskmanager
+  template:
+    metadata:
+      labels:
+        app: flink-taskmanager
+    spec:
+      containers:
+        - name: taskmanager
+          image: flink:1.16.0
+          args: ["taskmanager"] 

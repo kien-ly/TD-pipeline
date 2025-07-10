@@ -79,3 +79,119 @@ global:
         limits:
           memory: 2Gi
           cpu: 1000m
+
+# Development environment values
+replicaCount: 1
+
+image:
+  repository: confluentinc/cp-kafka-connect
+  tag: "7.5.0"
+  pullPolicy: IfNotPresent
+
+env:
+  # Database configuration
+  AWS_RDS_ENDPOINT: "dev-rds-endpoint.amazonaws.com"
+  AWS_RDS_USER: "postgres"
+  AWS_RDS_PASSWORD: ""
+  AWS_RDS_DBNAME: "postgres"
+  AWS_RDS_PORT: "5432"
+  REPLICATION_SLOT_NAME: "debezium_slot_dev"
+  POSTGRES_SCHEMA_TO_TRACK: "public"
+  POSTGRES_TABLE_TO_TRACK: "customers"
+  
+  # S3 configuration
+  AWS_REGION: "us-east-1"
+  S3_BUCKET_NAME: "dev-cdc-bucket"
+  
+  # Kafka configuration
+  KAFKA_BOOTSTRAP_SERVERS: "redpanda-0.redpanda.cdc-project.svc.cluster.local:9093,redpanda-1.redpanda.cdc-project.svc.cluster.local:9093,redpanda-2.redpanda.cdc-project.svc.cluster.local:9093"
+
+connectors:
+  debezium:
+    enabled: true
+    name: "debezium-postgres-dev"
+    config:
+      connector.class: "io.debezium.connector.postgresql.PostgresConnector"
+      database.hostname: "{{ .Values.env.AWS_RDS_ENDPOINT }}"
+      database.user: "{{ .Values.env.AWS_RDS_USER }}"
+      database.password: "{{ .Values.env.AWS_RDS_PASSWORD }}"
+      database.dbname: "{{ .Values.env.AWS_RDS_DBNAME }}"
+      database.port: "{{ .Values.env.AWS_RDS_PORT }}"
+      topic.prefix: "dbz"
+      database.server.name: "aws-rds-postgres-dev"
+      database.history.kafka.bootstrap.servers: "{{ .Values.env.KAFKA_BOOTSTRAP_SERVERS }}"
+      database.history.kafka.topic: "schema-changes.postgres.dev"
+      slot.name: "{{ .Values.env.REPLICATION_SLOT_NAME }}"
+      schema.include.list: "{{ .Values.env.POSTGRES_SCHEMA_TO_TRACK }}"
+      table.include.list: "{{ .Values.env.POSTGRES_SCHEMA_TO_TRACK }}.*"
+      topic.creation.enable: "true"
+      topic.creation.default.partitions: "3"
+      topic.creation.default.replication.factor: "3"
+      topic.creation.groups: "cdc_group"
+      topic.creation.cdc_group.include: "{{ .Values.env.POSTGRES_SCHEMA_TO_TRACK }}.*"
+      topic.creation.cdc_group.partitions: "3"
+      topic.creation.cdc_group.replication.factor: "3"
+      include.schema.changes: "true"
+      include.query: "false"
+      snapshot.mode: "initial"
+      snapshot.locking.mode: "minimal"
+      snapshot.delay.ms: "0"
+      snapshot.fetch.size: "1024"
+      max.queue.size: "16384"
+      max.batch.size: "2048"
+      poll.interval.ms: "1000"
+      heartbeat.interval.ms: "10000"
+      errors.max.retries: "3"
+      errors.retry.delay.max.ms: "500"
+      errors.retry.timeout.ms: "30000"
+      errors.tolerance: "all"
+      errors.log.enable: "true"
+      errors.log.include.messages: "true"
+      key.converter: "org.apache.kafka.connect.json.JsonConverter"
+      key.converter.schemas.enable: "true"
+      value.converter: "org.apache.kafka.connect.json.JsonConverter"
+      value.converter.schemas.enable: "true"
+      plugin.name: "pgoutput"
+
+  s3Sink:
+    enabled: true
+    name: "s3-sink-dev"
+    config:
+      connector.class: "io.confluent.connect.s3.S3SinkConnector"
+      topics: "dbz.{{ .Values.env.POSTGRES_SCHEMA_TO_TRACK }}.{{ .Values.env.POSTGRES_TABLE_TO_TRACK }}"
+      topics.dir: "topics"
+      s3.region: "{{ .Values.env.AWS_REGION }}"
+      s3.bucket.name: "{{ .Values.env.S3_BUCKET_NAME }}"
+      s3.part.size: "5242880"
+      flush.size: "1"
+      rotate.interval.ms: "10000"
+      format.class: "io.confluent.connect.s3.format.parquet.ParquetFormat"
+      partitioner.class: "io.confluent.connect.storage.partitioner.TimeBasedPartitioner"
+      path.format: "dt=yyyy-MM-dd"
+      partition.duration.ms: "3600000"
+      locale: "en-US"
+      timezone: "UTC"
+      timestamp.extractor: "Record"
+      timestamp.field: "ts_ms"
+      storage.class: "io.confluent.connect.s3.storage.S3Storage"
+      key.converter: "org.apache.kafka.connect.json.JsonConverter"
+      key.converter.schemas.enable: "true"
+      value.converter: "org.apache.kafka.connect.json.JsonConverter"
+      value.converter.schemas.enable: "true"
+      errors.retry.timeout: "30000"
+      errors.retry.delay.max.ms: "1000"
+      errors.tolerance: "all"
+      errors.log.enable: "true"
+      errors.log.include.messages: "true"
+      behavior.on.null.values: "ignore"
+      behavior.on.malformed.documents: "warn"
+      compression.type: "gzip"
+      parquet.codec: "snappy"
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 1Gi
+  requests:
+    cpu: 250m
+    memory: 512Mi

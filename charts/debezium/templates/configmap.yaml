@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: debezium-connector-config
+  namespace: {{ .Values.global.namespace | default "data-platform-dev" }}
+data:
+  connector.properties: |
+    {{ .Values.connectorConfig | toJson }} 

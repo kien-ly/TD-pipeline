@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kafka-connect-sink-config
+  namespace: {{ .Values.global.namespace | default "data-platform-dev-dev" }}
+data:
+  sink.properties: |
+    {{ .Values.sinkConfig | toJson }} 

@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flink-jobmanager
+  namespace: {{ .Values.global.namespace | default "data-platform-dev" }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flink-jobmanager
+  template:
+    metadata:
+      labels:
+        app: flink-jobmanager
+    spec:
+      containers:
+        - name: jobmanager
+          image: flink:1.16.0
+          args: ["jobmanager"]
+          ports:
+            - containerPort: 8081 

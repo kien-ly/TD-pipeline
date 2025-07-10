@@ -192,3 +192,17 @@ site/
 config/cloud-configs/aws/
 config/cloud-configs/azure/
 config/cloud-configs/gcp/
+
+# Kubernetes secrets and sensitive files
+scripts/create-secrets.sh.env
+scripts/create-secrets.sh
+secrets/
+*.secret.yaml
+*.secrets.yaml
+*.enc.yaml
+*.enc
+
+# local
+.idea/
+.vscode/
+local/

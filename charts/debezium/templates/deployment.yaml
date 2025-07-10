@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: debezium
+  namespace: {{ .Values.global.namespace | default "data-platform-dev" }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: debezium
+  template:
+    metadata:
+      labels:
+        app: debezium
+    spec:
+      containers:
+        - name: debezium
+          image: debezium/connect:2.2
+          env:
+            - name: POSTGRES_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.postgres.secretName }}
+                  key: {{ .Values.global.postgres.hostKey }}
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.postgres.secretName }}
+                  key: {{ .Values.global.postgres.usernameKey }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.postgres.secretName }}
+                  key: {{ .Values.global.postgres.passwordKey }}
+          ports:
+            - containerPort: 8083 

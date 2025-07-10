@@ -311,11 +311,6 @@ helm-redpanda-stack/
 │           ├── deployment.yaml          # Flink job/task manager
 │           ├── service.yaml             # Expose Flink UI or internal RPC
 │           └── configmap.yaml
-
-├── connectors/                          # Kafka Connect connector configs (JSON)
-│   ├── debezium-postgres.json           # Source connector config (Postgres -> Redpanda)
-│   └── s3-sink.json                     # Sink connector config (Redpanda -> S3)
-
 ├── config/                              # Static configuration files
 │   └── cloud/
 │       └── aws/                         # Cloud-specific config (unused in Kind)

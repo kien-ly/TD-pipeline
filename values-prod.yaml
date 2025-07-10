@@ -1,0 +1,19 @@
+global:
+  s3:
+    bucket: prod-bucket # Placeholder for production S3 bucket
+  postgres:
+    dbName: proddb # Placeholder for production database name
+    # hostOverride: prod-postgres.example.com
+  namespace: data-platform-prod
+
+redpanda:
+  replicaCount: 3
+
+debezium:
+  replicaCount: 2
+
+kafka-connect:
+  replicaCount: 2
+
+flink:
+  jobParallelism: 4 

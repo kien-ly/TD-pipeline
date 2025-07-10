@@ -1,5 +1,6 @@
 apiVersion: v2
 name: flink
-description: Apache Flink for stream processing
-version: 1.0.0
-appVersion: "1.18.0"
+description: Flink job cluster
+version: 0.1.0
+appVersion: "1.16.0"
+type: application 

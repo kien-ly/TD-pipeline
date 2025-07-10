@@ -1,38 +1,41 @@
 #!/bin/bash
-# scripts/deploy.sh
-
 set -e
 
-ENVIRONMENT=${1:-staging}
-NAMESPACE="td-pipeline-${ENVIRONMENT}"
-
-echo "Deploying TD-Pipeline to ${ENVIRONMENT} environment..."
-
-# Create namespace if it doesn't exist
-kubectl create namespace ${NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -
-
-# Install Sealed Secrets Controller (if not already installed)
-if ! kubectl get crd sealedsecrets.bitnami.com &> /dev/null; then
-    echo "Installing Sealed Secrets Controller..."
-    helm repo add sealed-secrets https://bitnami-labs.github.io/sealed-secrets
-    helm repo update
-    helm install sealed-secrets-controller sealed-secrets/sealed-secrets \
-        --namespace kube-system \
-        --create-namespace
+ENV=$1
+if [ -z "$ENV" ]; then
+  echo "❌ Usage: $0 <dev|prod|staging>"
+  exit 1
 fi
 
-# Deploy secrets
-echo "Deploying secrets..."
-kubectl apply -f secrets/${ENVIRONMENT}/ -n ${NAMESPACE}
+case $ENV in
+  dev)
+    NS="data-platform-dev"
+    VALUES="values-dev.yaml"
+    ;;
+  prod)
+    NS="data-platform-prod"
+    VALUES="values-prod.yaml"
+    ;;
+  staging)
+    NS="data-platform-staging"
+    VALUES="values-staging.yaml"
+    ;;
+  *)
+    echo "❌ Unknown environment: $ENV"
+    exit 2
+    ;;
+esac
 
-# Deploy the main application
-echo "Deploying TD-Pipeline..."
-helm upgrade --install td-pipeline-${ENVIRONMENT} charts/td-pipeline \
-    --namespace ${NAMESPACE} \
-    --values environments/values-${ENVIRONMENT}.yaml \
-    --wait \
-    --timeout 300s
+CHART_DIR=$(dirname "$0")/..
+VALUES_FILE="$CHART_DIR/$VALUES"
 
-echo "Deployment completed successfully!"
-echo "Checking deployment status..."
-kubectl get pods -n ${NAMESPACE}
+if ! command -v yq &> /dev/null; then
+  echo "[ERROR] yq is required. Install with: brew install yq (macOS) or pip install yq (Python)" >&2
+  exit 1
+fi
+
+helm dependency update "$CHART_DIR"
+helm upgrade --install data-platform "$CHART_DIR" \
+  -f "$CHART_DIR/values.yaml" \
+  -f "$VALUES_FILE" \
+  --namespace "$NS" --create-namespace 
